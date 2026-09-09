@@ -1,0 +1,27 @@
+/* Íconos SVG inline — nunca emojis como ícono de interfaz */
+window.HP_ICONS = {
+  popsicle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6a2 2 0 0 1 2 2v6a5 5 0 0 1-4 4.9V21a1 1 0 0 1-2 0v-5.1A5 5 0 0 1 7 11V5a2 2 0 0 1 2-2Z"/><path d="M7 8h10"/></svg>',
+  empanada:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12c0-5 4-9 9-9 3 3 3 6 0 9s-6 3-9 0Z"/><path d="M6 11.5c1-1 2-1 3 0M10 8.5c1-1 2-1 3 0M14 5.5c1-1 1.5-1 2.5-.3"/></svg>',
+  drink:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12l-1.2 15.2A3 3 0 0 1 13.8 21h-3.6a3 3 0 0 1-3-2.8L6 3Z"/><path d="M5 8h14M9 12v5M15 12v5"/></svg>',
+  frappe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 8h8l-1 11a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2L8 8Z"/><path d="M9 8 8 4h8l-1 4M12 2v2"/></svg>',
+  coffee:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9Z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M8 3c0 1-1 1-1 2s1 1 1 2M12 3c0 1-1 1-1 2s1 1 1 2"/></svg>',
+  cake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12h16v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6Z"/><path d="M4 12c0-2 2-3 4-3s3 1.5 4 1.5S14 9 16 9s4 1 4 3M12 5V2M12 2s1 1 1 2-1 1-1 1"/></svg>',
+  shake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 5h10l-1 4h1a2 2 0 0 1 2 2.2l-1 8A2 2 0 0 1 16 21H8a2 2 0 0 1-2-1.8l-1-8A2 2 0 0 1 7 9h1L7 5Z"/><path d="M7 5 6 3M17 5l1-2M9 11v6M15 11v6"/></svg>',
+  cart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3h2l2.6 12.4A2 2 0 0 0 9 17h9a2 2 0 0 0 2-1.6L21.5 7H6"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12.5 9.5 18 20 6"/></svg>',
+  stamp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 3h6a2 2 0 0 1 2 2v6a5 5 0 0 1-4 4.9V19a1 1 0 0 1-2 0v-3.1A5 5 0 0 1 7 11V5a2 2 0 0 1 2-2Z"/></svg>',
+  whatsapp:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.3A10 10 0 1 0 12 2Zm5.8 14.2c-.2.7-1.4 1.3-2 1.4-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3.1s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.3-.1.6.2.3.9 1.5 1.9 2.4 1.3 1.2 2.4 1.5 2.7 1.7.3.2.5.1.6-.1l.9-1c.2-.3.4-.2.7-.1.3.1 1.6.8 1.9 1 .3.1.5.2.5.3.1.2.1.6-.1 1.1Z"/></svg>',
+  dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 11h7v9h-7zM4 14h7v6H4z"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3.3 7 8.7 5 8.7-5M12 22V12M20.7 7 12 2 3.3 7v10L12 22l8.7-5V7Z"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5M16.5 8.8a3 3 0 1 0 0-5.5M21.5 20c-.6-2.4-2-4.2-3.9-5"/></svg>',
+  orders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h9l3 3v15H6zM15 3v3h3M9 12h6M9 16h6M9 8h3"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3.9a7.6 7.6 0 0 0-1.7-1L15 3h-6l-.4 2.5a7.6 7.6 0 0 0-1.7 1l-2.3-.9-2 3.4L4.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-.9c.5.4 1.1.8 1.7 1L9 21h6l.4-2.5c.6-.2 1.2-.6 1.7-1l2.3.9 2-3.4-2-1.5Z"/></svg>',
+  qr:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/></svg>',
+  logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+  gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 13h18M12 9v12M7.5 9a2.5 2.5 0 1 1 0-5C10 4 12 9 12 9S8.5 4 7.5 4 3 6 3 6M16.5 9a2.5 2.5 0 1 0 0-5C14 4 12 9 12 9s3.5-5 4.5-5 4.5 2 4.5 2"/></svg>',
+  empty:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/><path d="M2.5 3h2l2.4 11.4a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L20 7H6.3"/></svg>',
+};
+function hpIcon(name,cls){ return `<span class="${cls||''}" aria-hidden="true">${window.HP_ICONS[name]||''}</span>`; }

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel — Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="admin-side" id="hp-admin-side"></aside>
+  <main class="admin-main">
+    <span class="eyebrow">Panel del negocio</span>
+    <h1 style="font-size:clamp(1.5rem,3.4vw,2.1rem)">Hola, equipo Helados de Palito 👋</h1>
+    <p style="color:var(--ink-2)">Este es el resumen de lo que pasa hoy en tu menú digital.</p>
+
+    <div class="stat-grid" id="hp-stats"></div>
+
+    <div class="toolbar">
+      <h3 style="margin:0">Últimos pedidos</h3>
+      <a href="pedidos.html" class="btn btn-ghost btn-sm">Ver todos</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Folio</th><th>Cliente</th><th>Total</th><th>Entrega</th><th>Estado</th></tr></thead>
+        <tbody id="hp-ultimos-pedidos"></tbody>
+      </table>
+    </div>
+
+    <div class="toolbar" style="margin-top:34px">
+      <h3 style="margin:0">Clientes cerca de su regalo</h3>
+      <a href="clientes.html" class="btn btn-ghost btn-sm">Ver todos</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Teléfono</th><th>Sellos</th></tr></thead>
+        <tbody id="hp-clientes-cerca"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/admin-nav.js"></script>
+<script>
+(async function(){
+  const session = HP_AUTH.requireAdmin();
+  if(!session) return;
+  HP_ADMIN_NAV.mount('dashboard');
+
+  const [pedidos, clientes, productos] = await Promise.all([
+    HP_DATA.getPedidos(), HP_DATA.getClientes(), HP_DATA.getProductos({soloDisponibles:false})
+  ]);
+  const meta = HP_CONFIG.META_SELLOS;
+  const hoy = new Date().toISOString().slice(0,10);
+  const pedidosHoy = pedidos.filter(p => (p.fecha||'').slice(0,10) === hoy);
+  const activos = clientes.filter(c => c.activo !== false);
+  const cerca = clientes.filter(c => c.sellos >= meta - 1 && c.sellos < meta);
+  const completos = clientes.filter(c => c.sellos >= meta);
+
+  document.getElementById('hp-stats').innerHTML = `
+    <div class="stat-card"><div class="num mono">${pedidosHoy.length}</div><div class="lbl">Pedidos hoy</div></div>
+    <div class="stat-card"><div class="num mono">${activos.length}</div><div class="lbl">Clientes con tarjeta activa</div></div>
+    <div class="stat-card"><div class="num mono">${cerca.length}</div><div class="lbl">A 1 sello de su regalo</div></div>
+    <div class="stat-card"><div class="num mono">${completos.length}</div><div class="lbl">Tarjetas completas sin canjear</div></div>
+    <div class="stat-card"><div class="num mono">${productos.filter(p=>p.disponible!==false).length}/${productos.length}</div><div class="lbl">Productos disponibles</div></div>
+  `;
+
+  document.getElementById('hp-ultimos-pedidos').innerHTML = pedidos.slice(0,6).map(p=>`
+    <tr>
+      <td class="mono">${p.folio}</td>
+      <td>${p.cliente_nombre||'—'}</td>
+      <td class="mono">${HP_CART.formatCOP(p.subtotal)}</td>
+      <td>${p.tipoEntrega||p.tipo_entrega||'—'}</td>
+      <td><span class="pill ${p.estado==='entregado'?'pill-ok':p.estado==='cancelado'?'pill-danger':'pill-warn'}">${p.estado}</span></td>
+    </tr>`).join('') || `<tr><td colspan="5" style="color:var(--ink-3)">Todavía no hay pedidos registrados.</td></tr>`;
+
+  document.getElementById('hp-clientes-cerca').innerHTML = cerca.length
+    ? cerca.map(c=>`<tr><td>${c.nombre}</td><td class="mono">${c.telefono}</td><td>${c.sellos}/${meta}</td></tr>`).join('')
+    : `<tr><td colspan="3" style="color:var(--ink-3)">Nadie está a un sello de completar su tarjeta ahora mismo.</td></tr>`;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Negocio y QR — Panel Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="admin-side" id="hp-admin-side"></aside>
+  <main class="admin-main">
+    <span class="eyebrow">Negocio</span>
+    <h1 style="font-size:clamp(1.5rem,3.4vw,2.1rem)">Datos del negocio y tu código QR</h1>
+    <p style="color:var(--ink-2)">Imprime el QR para tus mesas o vitrina: lleva directo al menú digital.</p>
+
+    <div class="grid" style="grid-template-columns:1.1fr .9fr;gap:20px;align-items:start;margin-top:10px">
+      <div class="card" style="padding:22px">
+        <h3 style="margin-top:0">Información visible para tus clientes</h3>
+        <div class="field">
+          <label>Nombre del negocio</label>
+          <input class="finput" value="" id="cfg-nombre" disabled>
+        </div>
+        <div class="field">
+          <label>Dirección</label>
+          <input class="finput" value="" id="cfg-direccion" disabled>
+        </div>
+        <div class="field">
+          <label>Horario</label>
+          <input class="finput" value="" id="cfg-horario" disabled>
+        </div>
+        <div class="field">
+          <label>WhatsApp para pedidos</label>
+          <input class="finput" value="" id="cfg-whatsapp" disabled>
+        </div>
+        <p class="hint" style="margin-top:-6px">Estos datos vienen de <code class="mono">assets/js/config.js</code>. Para cambiarlos, edita ese archivo y vuelve a publicar el sitio (ver README).</p>
+      </div>
+
+      <div class="card" style="padding:22px;text-align:center">
+        <h3 style="margin-top:0">Tu código QR</h3>
+        <div class="field" style="text-align:left">
+          <label for="cfg-url">URL publicada de tu menú</label>
+          <input class="finput" id="cfg-url" placeholder="https://tu-sitio.vercel.app/menu/">
+          <div class="hint">Pégala aquí después de publicar en Vercel para generar el QR correcto.</div>
+        </div>
+        <div id="cfg-qr-wrap" style="margin:14px 0"></div>
+        <a class="btn btn-p btn-block" id="cfg-qr-download" target="_blank" rel="noopener">Abrir QR en una pestaña</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/admin-nav.js"></script>
+<script>
+(function(){
+  const session = HP_AUTH.requireAdmin();
+  if(!session) return;
+  HP_ADMIN_NAV.mount('config');
+
+  document.getElementById('cfg-nombre').value = HP_CONFIG.NEGOCIO_NOMBRE;
+  document.getElementById('cfg-direccion').value = HP_CONFIG.NEGOCIO_DIRECCION;
+  document.getElementById('cfg-horario').value = HP_CONFIG.NEGOCIO_HORARIO;
+  document.getElementById('cfg-whatsapp').value = '+' + HP_CONFIG.WHATSAPP_PHONE;
+
+  const QR_KEY = 'hp_qr_url_v1';
+  const urlInput = document.getElementById('cfg-url');
+  urlInput.value = localStorage.getItem(QR_KEY) || (window.location.origin + '/menu/');
+
+  function renderQR(){
+    const url = urlInput.value.trim() || (window.location.origin + '/menu/');
+    localStorage.setItem(QR_KEY, url);
+    const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(url)}`;
+    document.getElementById('cfg-qr-wrap').innerHTML = `<img src="${qrSrc}" alt="Código QR del menú" style="border-radius:var(--r-lg);border:1.5px solid var(--line)">`;
+    document.getElementById('cfg-qr-download').href = qrSrc;
+  }
+  urlInput.addEventListener('input', renderQR);
+  renderQR();
+})();
+</script>
+</body>
+</html>

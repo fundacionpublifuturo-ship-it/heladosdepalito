@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Productos — Panel Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="admin-side" id="hp-admin-side"></aside>
+  <main class="admin-main">
+    <span class="eyebrow">Catálogo</span>
+    <h1 style="font-size:clamp(1.5rem,3.4vw,2.1rem)">Productos y precios</h1>
+    <p style="color:var(--ink-2)">Edita precios, disponibilidad y fotos. Los cambios se reflejan al instante en el menú público.</p>
+
+    <div class="toolbar">
+      <div class="radio-row" id="hp-filtro-cat"></div>
+      <button class="btn btn-p btn-sm" id="hp-nuevo">Nuevo producto</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Foto</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Destacado</th><th>Disponible</th><th></th></tr></thead>
+        <tbody id="hp-tabla-productos"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="hp-modal">
+  <form class="modal-form" id="hp-form-producto">
+    <h3 id="hp-form-titulo" style="margin-top:0">Nuevo producto</h3>
+    <input type="hidden" id="p-id">
+    <div class="field">
+      <label for="p-nombre">Nombre</label>
+      <input id="p-nombre" class="finput" required placeholder="Ej. Paleta de fresa con crema">
+      <div class="error">Escribe un nombre.</div>
+    </div>
+    <div class="field">
+      <label for="p-categoria">Categoría</label>
+      <select id="p-categoria" class="finput" required></select>
+    </div>
+    <div class="field">
+      <label for="p-descripcion">Descripción corta</label>
+      <input id="p-descripcion" class="finput" placeholder="Ej. Con trozos de fruta natural">
+    </div>
+    <div class="field">
+      <label for="p-precio">Precio (COP)</label>
+      <input id="p-precio" class="finput" type="number" min="0" step="500" required placeholder="Ej. 6000">
+      <div class="error">Escribe un precio válido.</div>
+    </div>
+    <div class="field">
+      <label for="p-imagen">URL de la imagen (opcional)</label>
+      <input id="p-imagen" class="finput" placeholder="https://…">
+      <div class="hint">Si lo dejas vacío, se muestra un ícono de marca en su lugar.</div>
+    </div>
+    <div class="field">
+      <label><input type="checkbox" id="p-destacado" style="width:auto;margin-right:8px">Marcar como "Más pedido"</label>
+    </div>
+    <div class="field">
+      <label><input type="checkbox" id="p-disponible" checked style="width:auto;margin-right:8px">Disponible en el menú</label>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button type="button" class="btn btn-ghost btn-block" id="hp-cancelar">Cancelar</button>
+      <button type="submit" class="btn btn-p btn-block">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/admin-nav.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+(async function(){
+  const session = HP_AUTH.requireAdmin();
+  if(!session) return;
+  HP_ADMIN_NAV.mount('productos');
+
+  let categorias = await HP_DATA.getCategorias();
+  let productos = await HP_DATA.getProductos({soloDisponibles:false});
+  let filtro = 'todas';
+
+  function renderFiltro(){
+    const chips = [{id:'todas', nombre:'Todas'}, ...categorias];
+    document.getElementById('hp-filtro-cat').innerHTML = chips.map(c=>`
+      <label class="radio-chip ${filtro===c.id?'checked':''}" data-cat="${c.id}">${c.nombre}</label>`).join('');
+    document.querySelectorAll('#hp-filtro-cat .radio-chip').forEach(chip=>{
+      chip.addEventListener('click', ()=>{ filtro = chip.dataset.cat; renderFiltro(); renderTabla(); });
+    });
+  }
+
+  function renderTabla(){
+    const list = productos.filter(p => filtro==='todas' || p.categoria===filtro);
+    const tbody = document.getElementById('hp-tabla-productos');
+    tbody.innerHTML = list.map(p=>{
+      const cat = categorias.find(c=>c.id===p.categoria);
+      return `
+      <tr>
+        <td>${p.imagen ? `<img src="${p.imagen}" alt="">` : `<div class="thumb placeholder" style="width:44px;height:44px;border-radius:10px">${hpIcon('popsicle')}</div>`}</td>
+        <td><b>${p.nombre}</b><div style="color:var(--ink-3);font-size:.78rem">${p.descripcion||''}</div></td>
+        <td>${cat?cat.nombre:'—'}</td>
+        <td class="mono">${HP_CART.formatCOP(p.precio)}</td>
+        <td>${p.destacado ? `<span class="pill pill-warn">Destacado</span>` : '—'}</td>
+        <td><button class="toggle ${p.disponible!==false?'on':''}" data-toggle="${p.id}" aria-label="Disponible"></button></td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" data-edit="${p.id}">Editar</button>
+          <button class="btn btn-ghost btn-sm" data-del="${p.id}" style="color:var(--danger)">Eliminar</button>
+        </td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="7" style="color:var(--ink-3)">No hay productos en esta categoría todavía.</td></tr>`;
+
+    tbody.querySelectorAll('[data-toggle]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const p = productos.find(x=>x.id===btn.dataset.toggle);
+        p.disponible = !(p.disponible!==false);
+        await HP_DATA.upsertProducto(p);
+        HP_UI.toast(p.disponible ? 'Producto activado' : 'Producto marcado como agotado', 'ok');
+        renderTabla();
+      });
+    });
+    tbody.querySelectorAll('[data-edit]').forEach(btn=>{
+      btn.addEventListener('click', ()=> abrirForm(productos.find(x=>x.id===btn.dataset.edit)));
+    });
+    tbody.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('¿Eliminar este producto del menú?')) return;
+        await HP_DATA.eliminarProducto(btn.dataset.del);
+        productos = productos.filter(p=>p.id!==btn.dataset.del);
+        renderTabla();
+        HP_UI.toast('Producto eliminado', 'ok');
+      });
+    });
+  }
+
+  document.getElementById('p-categoria').innerHTML = categorias.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+
+  function abrirForm(p){
+    document.getElementById('hp-form-titulo').textContent = p ? 'Editar producto' : 'Nuevo producto';
+    document.getElementById('p-id').value = p?.id || '';
+    document.getElementById('p-nombre').value = p?.nombre || '';
+    document.getElementById('p-categoria').value = p?.categoria || categorias[0]?.id || '';
+    document.getElementById('p-descripcion').value = p?.descripcion || '';
+    document.getElementById('p-precio').value = p?.precio ?? '';
+    document.getElementById('p-imagen').value = p?.imagen || '';
+    document.getElementById('p-destacado').checked = !!p?.destacado;
+    document.getElementById('p-disponible').checked = p ? p.disponible!==false : true;
+    document.getElementById('hp-modal').classList.add('open');
+  }
+  function cerrarForm(){ document.getElementById('hp-modal').classList.remove('open'); }
+
+  document.getElementById('hp-nuevo').addEventListener('click', ()=> abrirForm(null));
+  document.getElementById('hp-cancelar').addEventListener('click', cerrarForm);
+  document.getElementById('hp-modal').addEventListener('click', (e)=>{ if(e.target.id==='hp-modal') cerrarForm(); });
+
+  document.getElementById('hp-form-producto').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const id = document.getElementById('p-id').value || undefined;
+    const producto = {
+      id, nombre: document.getElementById('p-nombre').value.trim(),
+      categoria: document.getElementById('p-categoria').value,
+      descripcion: document.getElementById('p-descripcion').value.trim(),
+      precio: Number(document.getElementById('p-precio').value),
+      imagen: document.getElementById('p-imagen').value.trim() || null,
+      destacado: document.getElementById('p-destacado').checked,
+      disponible: document.getElementById('p-disponible').checked,
+    };
+    if(!producto.nombre || !producto.precio){ HP_UI.toast('Completa nombre y precio', 'err'); return; }
+    const guardado = await HP_DATA.upsertProducto(producto);
+    const idx = productos.findIndex(x=>x.id===guardado.id);
+    if(idx>=0) productos[idx] = guardado; else productos.push(guardado);
+    cerrarForm();
+    renderTabla();
+    HP_UI.toast('Producto guardado', 'ok');
+  });
+
+  renderFiltro();
+  renderTabla();
+})();
+</script>
+</body>
+</html>

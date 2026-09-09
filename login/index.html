@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Iniciar sesión — Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-card rv in">
+    <div class="logo-row"><img src="../assets/img/logo.png" alt="Helados de Palito"></div>
+    <h2 style="text-align:center;margin:0 0 4px">Bienvenido de nuevo</h2>
+    <p style="text-align:center;color:var(--ink-2);font-size:.86rem;margin:0 0 20px">Ingresa a tu tarjeta de fidelización o al panel del negocio.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab" id="tab-cliente">Soy cliente</button>
+      <button class="auth-tab" id="tab-admin">Soy del negocio</button>
+    </div>
+
+    <form id="form-cliente">
+      <div class="field">
+        <label for="c-telefono">Tu número de teléfono</label>
+        <input id="c-telefono" class="finput" inputmode="numeric" placeholder="Ej. 3001234567" required>
+        <div class="error">Escribe el teléfono con el que te registraste.</div>
+      </div>
+      <div class="field">
+        <label for="c-password">Código de tu tarjeta</label>
+        <input id="c-password" class="finput" type="password" placeholder="El código que te dio el negocio" required>
+        <div class="error">Escribe tu código.</div>
+      </div>
+      <button type="submit" class="btn btn-p btn-block">Ver mi tarjeta</button>
+      <p style="text-align:center;font-size:.78rem;color:var(--ink-3);margin-top:14px">
+        ¿No tienes tarjeta todavía? Pídele al negocio que active tu perfil en tu próxima compra.
+      </p>
+    </form>
+
+    <form id="form-admin" style="display:none">
+      <div class="field">
+        <label for="a-password">Contraseña de administrador</label>
+        <input id="a-password" class="finput" type="password" placeholder="••••••••" required>
+        <div class="error">Contraseña incorrecta.</div>
+      </div>
+      <button type="submit" class="btn btn-accent btn-block">Entrar al panel</button>
+    </form>
+
+    <p style="text-align:center;font-size:.78rem;margin-top:18px"><a href="../">← Volver al inicio</a></p>
+  </div>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script>
+(function(){
+  const tabCliente = document.getElementById('tab-cliente');
+  const tabAdmin = document.getElementById('tab-admin');
+  const formCliente = document.getElementById('form-cliente');
+  const formAdmin = document.getElementById('form-admin');
+
+  function showAdmin(isAdmin){
+    tabAdmin.classList.toggle('active', isAdmin);
+    tabCliente.classList.toggle('active', !isAdmin);
+    formAdmin.style.display = isAdmin ? 'block' : 'none';
+    formCliente.style.display = isAdmin ? 'none' : 'block';
+  }
+  showAdmin(new URLSearchParams(location.search).get('admin')==='1');
+
+  tabCliente.addEventListener('click', ()=> showAdmin(false));
+  tabAdmin.addEventListener('click', ()=> showAdmin(true));
+
+  formCliente.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const telefono = document.getElementById('c-telefono').value.trim();
+    const password = document.getElementById('c-password').value.trim();
+    const btn = formCliente.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    try{
+      await HP_AUTH.loginCliente(telefono, password);
+      window.location.href = '../fidelizacion/';
+    }catch(err){
+      formCliente.querySelectorAll('.field').forEach(f=>f.classList.add('bad'));
+      formCliente.querySelectorAll('.error').forEach(el=> el.textContent = err.message);
+      btn.disabled = false;
+    }
+  });
+
+  formAdmin.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const password = document.getElementById('a-password').value.trim();
+    const btn = formAdmin.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    try{
+      HP_AUTH.loginAdmin(password);
+      window.location.href = '../admin/';
+    }catch(err){
+      formAdmin.querySelector('.field').classList.add('bad');
+      formAdmin.querySelector('.error').textContent = err.message;
+      btn.disabled = false;
+    }
+  });
+
+  ['c-telefono','c-password'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', (e)=> e.target.closest('.field').classList.remove('bad'));
+  });
+  document.getElementById('a-password').addEventListener('input', (e)=> e.target.closest('.field').classList.remove('bad'));
+})();
+</script>
+</body>
+</html>

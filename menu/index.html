@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Menú — Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div id="hp-header"></div>
+
+<section class="hero" style="padding:26px 0 6px">
+  <div class="container hero-inner rv" style="max-width:720px">
+    <span class="eyebrow">Menú oficial</span>
+    <h1 style="font-size:clamp(1.6rem,3.6vw,2.4rem)">¿Qué se te antoja hoy?</h1>
+    <p class="lead" style="margin-bottom:6px">Toca una categoría o busca tu producto favorito.</p>
+  </div>
+</section>
+
+<nav class="cat-strip container" id="hp-cats"></nav>
+
+<main class="container" id="hp-menu-content" style="padding-bottom:60px">
+  <div class="empty-state"><p>Cargando menú…</p></div>
+</main>
+
+<!-- Modal de producto -->
+<div class="modal-overlay" id="hp-modal">
+  <div class="modal" id="hp-modal-inner"></div>
+</div>
+
+<div id="hp-footer"></div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+(async function(){
+  HP_UI.mount({root:'../'});
+
+  const [categorias, productos] = await Promise.all([
+    HP_DATA.getCategorias(),
+    HP_DATA.getProductos({soloDisponibles:false})
+  ]);
+
+  let categoriaActiva = 'todas';
+  let query = '';
+
+  const catsEl = document.getElementById('hp-cats');
+  const contentEl = document.getElementById('hp-menu-content');
+
+  function renderCats(){
+    const chips = [{id:'todas', nombre:'Todo', icono:'popsicle'}, ...categorias];
+    catsEl.innerHTML = chips.map(c => `
+      <button class="cat-chip ${c.id===categoriaActiva?'active':''}" data-cat="${c.id}">
+        ${hpIcon(c.icono||'popsicle')}
+        <span>${c.nombre}</span>
+      </button>`).join('');
+    catsEl.querySelectorAll('.cat-chip').forEach(b=>{
+      b.addEventListener('click', ()=>{ categoriaActiva = b.dataset.cat; renderContent(); });
+    });
+  }
+
+  function productCard(p){
+    const disponible = p.disponible !== false;
+    return `
+    <div class="card rv in" data-id="${p.id}">
+      <div class="thumb ${p.imagen?'':'placeholder'}">
+        ${p.imagen ? `<img src="${p.imagen}" alt="${p.nombre}" loading="lazy">` : hpIcon('popsicle')}
+        ${p.destacado ? `<span class="badge">Más pedido</span>` : ''}
+      </div>
+      <div class="body">
+        <h4>${p.nombre}</h4>
+        <p>${p.descripcion||''}</p>
+        <div class="row">
+          <span class="price mono">${HP_CART.formatCOP(p.precio)}</span>
+          ${disponible
+            ? `<button class="add-btn" data-add="${p.id}" aria-label="Agregar al carrito">${hpIcon('plus')}</button>`
+            : `<span class="pill pill-danger">Agotado</span>`}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function renderContent(){
+    let list = productos.filter(p => categoriaActiva==='todas' || p.categoria===categoriaActiva);
+    if(query.trim()){
+      const q = query.toLowerCase();
+      list = list.filter(p => p.nombre.toLowerCase().includes(q) || (p.descripcion||'').toLowerCase().includes(q));
+    }
+    renderCats();
+
+    if(list.length===0){
+      contentEl.innerHTML = `<div class="empty-state">${hpIcon('empty')}<p>No encontramos productos con esa búsqueda.</p></div>`;
+      return;
+    }
+
+    if(categoriaActiva!=='todas' || query.trim()){
+      contentEl.innerHTML = `<div class="grid" style="margin-top:20px">${list.map(productCard).join('')}</div>`;
+    } else {
+      contentEl.innerHTML = categorias.map(cat=>{
+        const items = list.filter(p=>p.categoria===cat.id);
+        if(items.length===0) return '';
+        return `
+        <div class="section-title rv in">
+          <h2>${cat.nombre}</h2>
+          <span class="count mono">${items.length} productos</span>
+        </div>
+        <div class="grid">${items.map(productCard).join('')}</div>`;
+      }).join('');
+    }
+
+    contentEl.querySelectorAll('[data-add]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const p = productos.find(x=>x.id===btn.dataset.add);
+        HP_CART.add(p, 1);
+        btn.classList.add('added');
+        btn.innerHTML = hpIcon('check');
+        HP_UI.toast(`${p.nombre} agregado al carrito`, 'ok');
+        setTimeout(()=>{ btn.classList.remove('added'); btn.innerHTML = hpIcon('plus'); }, 1200);
+      });
+    });
+    contentEl.querySelectorAll('.card').forEach(card=>{
+      card.addEventListener('click', ()=> openModal(productos.find(x=>x.id===card.dataset.id)));
+    });
+  }
+
+  function openModal(p){
+    if(!p) return;
+    document.getElementById('hp-modal-inner').innerHTML = `
+      ${p.imagen ? `<img src="${p.imagen}" alt="${p.nombre}">` : `<div class="thumb placeholder" style="aspect-ratio:16/10">${hpIcon('popsicle')}</div>`}
+      <div class="content">
+        <h3>${p.nombre}</h3>
+        <p style="color:var(--ink-2)">${p.descripcion||''}</p>
+        <div class="row" style="display:flex;justify-content:space-between;align-items:center;margin:16px 0">
+          <span class="price" style="font-size:1.3rem">${HP_CART.formatCOP(p.precio)}</span>
+          <div class="qty" id="hp-modal-qty">
+            <button data-q="dec">−</button><span id="hp-modal-qty-n">1</span><button data-q="inc">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="hp-modal-nota">Notas para tu pedido (opcional)</label>
+          <input id="hp-modal-nota" class="finput" placeholder="Ej. sin arequipe, extra chantilly…">
+        </div>
+        <button class="btn btn-p btn-block" id="hp-modal-add">Agregar al carrito</button>
+      </div>`;
+    let qty = 1;
+    document.getElementById('hp-modal').classList.add('open');
+    document.documentElement.classList.add('no-scroll');
+    document.getElementById('hp-modal-qty').addEventListener('click', (e)=>{
+      const b = e.target.closest('button'); if(!b) return;
+      qty = b.dataset.q==='inc' ? qty+1 : Math.max(1,qty-1);
+      document.getElementById('hp-modal-qty-n').textContent = qty;
+    });
+    document.getElementById('hp-modal-add').addEventListener('click', ()=>{
+      const nota = document.getElementById('hp-modal-nota').value.trim();
+      HP_CART.add(p, qty, nota);
+      HP_UI.toast(`${p.nombre} agregado al carrito`, 'ok');
+      closeModal();
+    });
+  }
+  function closeModal(){
+    document.getElementById('hp-modal').classList.remove('open');
+    document.documentElement.classList.remove('no-scroll');
+  }
+  document.getElementById('hp-modal').addEventListener('click', (e)=>{ if(e.target.id==='hp-modal') closeModal(); });
+
+  document.getElementById('hp-search')?.addEventListener('input', (e)=>{ query = e.target.value; renderContent(); });
+
+  renderContent();
+})();
+</script>
+</body>
+</html>

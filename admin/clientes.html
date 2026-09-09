@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clientes y sellos — Panel Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="admin-side" id="hp-admin-side"></aside>
+  <main class="admin-main">
+    <span class="eyebrow">Fidelización</span>
+    <h1 style="font-size:clamp(1.5rem,3.4vw,2.1rem)">Clientes y tarjetas de sellos</h1>
+    <p style="color:var(--ink-2)">Crea el perfil de un cliente nuevo y asígnale sellos cuando compre. Los clientes nunca pueden sumarse sellos ellos mismos.</p>
+
+    <div class="toolbar">
+      <div class="field" style="margin:0;max-width:280px">
+        <input id="hp-buscar" class="finput" placeholder="Buscar por nombre o teléfono…">
+      </div>
+      <button class="btn btn-p btn-sm" id="hp-nuevo-cliente">Crear cliente</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Teléfono</th><th>Sellos</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="hp-tabla-clientes"></tbody>
+      </table>
+    </div>
+
+    <div class="toolbar" style="margin-top:34px">
+      <h3 style="margin:0">Premio actual</h3>
+    </div>
+    <div class="card" style="padding:18px;max-width:480px">
+      <div class="field" style="margin-bottom:10px">
+        <label for="p-nombre-premio">Nombre del premio (al completar la tarjeta)</label>
+        <input id="p-nombre-premio" class="finput" placeholder="Ej. Paleta gratis a elección">
+      </div>
+      <button class="btn btn-p btn-sm" id="hp-guardar-premio">Guardar premio</button>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="hp-modal">
+  <form class="modal-form" id="hp-form-cliente">
+    <h3 style="margin-top:0">Crear cliente</h3>
+    <div class="field">
+      <label for="c-nombre">Nombre del cliente</label>
+      <input id="c-nombre" class="finput" required placeholder="Nombre y apellido">
+      <div class="error">Escribe el nombre.</div>
+    </div>
+    <div class="field">
+      <label for="c-telefono">Teléfono</label>
+      <input id="c-telefono" class="finput" required inputmode="numeric" placeholder="Ej. 3001234567">
+      <div class="error">Escribe un teléfono válido.</div>
+    </div>
+    <div class="field">
+      <label for="c-password">Código de acceso para el cliente</label>
+      <input id="c-password" class="finput" required placeholder="Ej. 4 dígitos fáciles de recordar">
+      <div class="hint">Compártelo con el cliente: lo usará junto a su teléfono para ver su tarjeta.</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button type="button" class="btn btn-ghost btn-block" id="hp-cancelar-cliente">Cancelar</button>
+      <button type="submit" class="btn btn-p btn-block">Crear tarjeta</button>
+    </div>
+  </form>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/admin-nav.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+(async function(){
+  const session = HP_AUTH.requireAdmin();
+  if(!session) return;
+  HP_ADMIN_NAV.mount('clientes');
+
+  let clientes = await HP_DATA.getClientes();
+  const recompensa = await HP_DATA.getRecompensa();
+  document.getElementById('p-nombre-premio').value = recompensa?.nombre || '';
+  const meta = HP_CONFIG.META_SELLOS;
+  let query = '';
+
+  function renderTabla(){
+    const list = clientes.filter(c => !query || c.nombre.toLowerCase().includes(query) || c.telefono.includes(query));
+    document.getElementById('hp-tabla-clientes').innerHTML = list.map(c=>{
+      const completa = c.sellos >= meta;
+      return `
+      <tr>
+        <td><b>${c.nombre}</b></td>
+        <td class="mono">${c.telefono}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="mono">${c.sellos}/${meta}</span>
+            ${completa ? `<span class="pill pill-warn">${hpIcon('gift')} Regalo listo</span>` : ''}
+          </div>
+        </td>
+        <td><span class="pill ${c.activo!==false?'pill-ok':'pill-danger'}">${c.activo!==false?'Activa':'Inactiva'}</span></td>
+        <td style="white-space:nowrap;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" data-sello="${c.id}" ${completa?'disabled':''}>+1 sello</button>
+          <button class="btn btn-accent btn-sm" data-canjear="${c.id}" ${completa?'':'disabled'}>Canjear premio</button>
+          <button class="btn btn-ghost btn-sm" data-activo="${c.id}">${c.activo!==false?'Desactivar':'Activar'}</button>
+        </td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="5" style="color:var(--ink-3)">No hay clientes registrados todavía.</td></tr>`;
+
+    document.querySelectorAll('[data-sello]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const c = await HP_DATA.sumarSello(btn.dataset.sello, 'Compra registrada por el negocio');
+        clientes = clientes.map(x=>x.id===c.id?c:x);
+        renderTabla();
+        HP_UI.toast(`Sello agregado a ${c.nombre} (${c.sellos}/${meta})`, 'ok');
+      });
+    });
+    document.querySelectorAll('[data-canjear]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(!confirm('¿Confirmar la entrega del premio y reiniciar la tarjeta?')) return;
+        const c = await HP_DATA.canjearPremio(btn.dataset.canjear);
+        clientes = clientes.map(x=>x.id===c.id?c:x);
+        renderTabla();
+        HP_UI.toast('Premio canjeado, tarjeta reiniciada', 'ok');
+      });
+    });
+    document.querySelectorAll('[data-activo]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const c = clientes.find(x=>x.id===btn.dataset.activo);
+        await HP_DATA.setClienteActivo(c.id, !(c.activo!==false));
+        c.activo = !(c.activo!==false);
+        renderTabla();
+      });
+    });
+  }
+
+  document.getElementById('hp-buscar').addEventListener('input', (e)=>{ query = e.target.value.toLowerCase(); renderTabla(); });
+
+  document.getElementById('hp-nuevo-cliente').addEventListener('click', ()=> document.getElementById('hp-modal').classList.add('open'));
+  document.getElementById('hp-cancelar-cliente').addEventListener('click', ()=> document.getElementById('hp-modal').classList.remove('open'));
+  document.getElementById('hp-modal').addEventListener('click', (e)=>{ if(e.target.id==='hp-modal') document.getElementById('hp-modal').classList.remove('open'); });
+
+  document.getElementById('hp-form-cliente').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    try{
+      const nuevo = await HP_DATA.crearCliente({
+        nombre: document.getElementById('c-nombre').value.trim(),
+        telefono: document.getElementById('c-telefono').value.trim(),
+        password: document.getElementById('c-password').value.trim(),
+      });
+      clientes.unshift(nuevo);
+      document.getElementById('hp-modal').classList.remove('open');
+      document.getElementById('hp-form-cliente').reset();
+      renderTabla();
+      HP_UI.toast(`Tarjeta creada para ${nuevo.nombre}`, 'ok');
+    }catch(err){
+      HP_UI.toast(err.message, 'err');
+    }
+  });
+
+  document.getElementById('hp-guardar-premio').addEventListener('click', async ()=>{
+    const nombre = document.getElementById('p-nombre-premio').value.trim();
+    if(!nombre){ HP_UI.toast('Escribe el nombre del premio', 'err'); return; }
+    await HP_DATA.setRecompensa({nombre});
+    HP_UI.toast('Premio actualizado', 'ok');
+  });
+
+  renderTabla();
+})();
+</script>
+</body>
+</html>

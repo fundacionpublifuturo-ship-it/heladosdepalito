@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi tarjeta — Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div id="hp-header"></div>
+
+<main class="container" style="padding:30px 20px 60px;max-width:560px">
+  <div id="hp-guard"></div>
+
+  <div id="hp-loyalty-app" style="display:none">
+    <span class="eyebrow">Fidelización</span>
+    <h1 style="font-size:clamp(1.5rem,3.4vw,2rem)">Tu tarjeta de sellos</h1>
+    <p style="color:var(--ink-2);margin-bottom:22px">Cada compra que registra el negocio suma un sello. Al completar la tarjeta, tienes un regalo esperándote.</p>
+
+    <div class="loyalty-card rv in" id="hp-loyalty-card"></div>
+
+    <h3 style="margin-top:34px">Historial de sellos</h3>
+    <div class="table-wrap" style="margin-top:10px">
+      <table>
+        <thead><tr><th>Fecha</th><th>Detalle</th></tr></thead>
+        <tbody id="hp-historial"></tbody>
+      </table>
+    </div>
+
+    <a href="../menu/" class="btn btn-p btn-block" style="margin-top:26px">Ver el menú y pedir</a>
+    <button class="btn btn-ghost btn-block" id="hp-logout" style="margin-top:10px">Cerrar sesión</button>
+  </div>
+</main>
+
+<div id="hp-footer"></div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+(async function(){
+  HP_UI.mount({root:'../'});
+  const session = HP_AUTH.session();
+
+  if(!session || session.tipo!=='cliente'){
+    document.getElementById('hp-guard').innerHTML = `
+      <div class="empty-state" style="padding-top:10px">
+        ${hpIcon('stamp')}
+        <p>Inicia sesión con tu número de teléfono para ver tu tarjeta de fidelización.</p>
+        <a class="btn btn-p" href="../login/">Iniciar sesión</a>
+      </div>`;
+    return;
+  }
+
+  const cliente = await HP_DATA.getClientePorTelefono(session.telefono);
+  const recompensa = await HP_DATA.getRecompensa();
+  const meta = HP_CONFIG.META_SELLOS;
+
+  if(!cliente){ HP_AUTH.logout(); window.location.href = '../login/'; return; }
+
+  document.getElementById('hp-loyalty-app').style.display = 'block';
+
+  const completa = cliente.sellos >= meta;
+  const cardEl = document.getElementById('hp-loyalty-card');
+  cardEl.className = 'loyalty-card rv in' + (completa ? ' complete' : '');
+  cardEl.innerHTML = `
+    <div class="loyalty-top">
+      <div class="brandmark"><img src="../assets/img/logo.png" alt=""></div>
+      <div class="loyalty-folio mono">#${cliente.id.toUpperCase()}</div>
+    </div>
+    <div class="loyalty-name">${cliente.nombre}</div>
+    <div class="loyalty-sub">${completa ? '¡Tarjeta completa! Tu regalo te espera 🎁' : `Te faltan ${meta - cliente.sellos} sellos para tu regalo`}</div>
+    <div class="stamps">
+      ${Array.from({length:meta}).map((_,i)=>`
+        <div class="stamp ${i < cliente.sellos ? 'filled':''}">${hpIcon('stamp')}</div>
+      `).join('')}
+    </div>
+    <div class="loyalty-foot"><b>${cliente.sellos}/${meta}</b> · Premio: ${recompensa?.nombre || 'Por definir'}</div>
+  `;
+
+  const hist = cliente.historial || [];
+  document.getElementById('hp-historial').innerHTML = hist.length
+    ? hist.map(h=>`<tr><td class="mono">${h.fecha}</td><td>${h.nota}</td></tr>`).join('')
+    : `<tr><td colspan="2" style="color:var(--ink-3)">Aún no tienes compras registradas.</td></tr>`;
+
+  document.getElementById('hp-logout').addEventListener('click', ()=>{
+    HP_AUTH.logout();
+    window.location.href = '../';
+  });
+})();
+</script>
+</body>
+</html>

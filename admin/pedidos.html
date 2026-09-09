@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedidos — Panel Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div class="admin-shell">
+  <aside class="admin-side" id="hp-admin-side"></aside>
+  <main class="admin-main">
+    <span class="eyebrow">Pedidos</span>
+    <h1 style="font-size:clamp(1.5rem,3.4vw,2.1rem)">Pedidos recibidos</h1>
+    <p style="color:var(--ink-2)">Cada pedido confirmado por WhatsApp queda registrado aquí. Actualiza su estado a medida que avanza.</p>
+
+    <div class="toolbar" id="hp-filtro-estado"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Folio</th><th>Cliente</th><th>Teléfono</th><th>Total</th><th>Entrega</th><th>Pago</th><th>Estado</th></tr></thead>
+        <tbody id="hp-tabla-pedidos"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/auth.js"></script>
+<script src="../assets/js/admin-nav.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+(async function(){
+  const session = HP_AUTH.requireAdmin();
+  if(!session) return;
+  HP_ADMIN_NAV.mount('pedidos');
+
+  let pedidos = await HP_DATA.getPedidos();
+  let filtro = 'todos';
+  const ESTADOS = ['pendiente','en preparación','listo','entregado','cancelado'];
+
+  function renderFiltro(){
+    const opts = [{id:'todos', nombre:'Todos'}, ...ESTADOS.map(e=>({id:e, nombre:e}))];
+    document.getElementById('hp-filtro-estado').innerHTML = opts.map(o=>`
+      <label class="radio-chip ${filtro===o.id?'checked':''}" data-estado="${o.id}" style="text-transform:capitalize">${o.nombre}</label>`).join('');
+    document.querySelectorAll('#hp-filtro-estado .radio-chip').forEach(chip=>{
+      chip.addEventListener('click', ()=>{ filtro = chip.dataset.estado; renderFiltro(); renderTabla(); });
+    });
+  }
+
+  function renderTabla(){
+    const list = pedidos.filter(p => filtro==='todos' || p.estado===filtro);
+    document.getElementById('hp-tabla-pedidos').innerHTML = list.map(p=>`
+      <tr>
+        <td class="mono">${p.folio}</td>
+        <td>${p.cliente_nombre||'—'}</td>
+        <td class="mono">${p.cliente_telefono||'—'}</td>
+        <td class="mono">${HP_CART.formatCOP(p.subtotal)}</td>
+        <td>${p.tipoEntrega||p.tipo_entrega||'—'}</td>
+        <td>${p.metodoPago||p.metodo_pago||'—'}</td>
+        <td>
+          <select class="finput" style="padding:7px 10px;font-size:.8rem" data-id="${p.id}">
+            ${ESTADOS.map(e=>`<option value="${e}" ${p.estado===e?'selected':''}>${e}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`).join('') || `<tr><td colspan="7" style="color:var(--ink-3)">No hay pedidos con este estado.</td></tr>`;
+
+    document.querySelectorAll('select[data-id]').forEach(sel=>{
+      sel.addEventListener('change', async ()=>{
+        await HP_DATA.setPedidoEstado(sel.dataset.id, sel.value);
+        const p = pedidos.find(x=>x.id===sel.dataset.id);
+        if(p) p.estado = sel.value;
+        HP_UI.toast('Estado actualizado', 'ok');
+      });
+    });
+  }
+
+  renderFiltro();
+  renderTabla();
+})();
+</script>
+</body>
+</html>

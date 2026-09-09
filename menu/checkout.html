@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Confirmar pedido — Helados De Palito</title>
+<link rel="icon" href="../assets/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/system.css">
+</head>
+<body>
+
+<div id="hp-header"></div>
+
+<main class="container" style="padding:30px 20px 60px;max-width:640px">
+  <span class="eyebrow">Paso final</span>
+  <h1 style="font-size:clamp(1.5rem,3.4vw,2rem)">Confirma tu pedido</h1>
+  <p style="color:var(--ink-2);margin-bottom:26px">Revisa tu carrito, cuéntanos cómo prefieres recibirlo y lo enviamos directo por WhatsApp al negocio.</p>
+
+  <div id="hp-resumen" class="card" style="padding:18px;margin-bottom:26px"></div>
+
+  <form id="hp-checkout-form">
+    <div class="field">
+      <label for="f-nombre">Tu nombre</label>
+      <input id="f-nombre" class="finput" required placeholder="¿Cómo te llamas?">
+      <div class="error">Cuéntanos tu nombre para el pedido.</div>
+    </div>
+    <div class="field">
+      <label for="f-telefono">Tu teléfono</label>
+      <input id="f-telefono" class="finput" required inputmode="numeric" placeholder="Ej. 3001234567">
+      <div class="hint">Si ya tienes tarjeta de fidelización, la vinculamos automáticamente con este número.</div>
+      <div class="error">Escribe un teléfono válido (mínimo 7 dígitos).</div>
+    </div>
+
+    <div class="field">
+      <label>Tipo de entrega</label>
+      <div class="radio-row" id="hp-entrega">
+        <label class="radio-chip checked"><input type="radio" name="entrega" value="Recoger en tienda" checked>Recoger en tienda</label>
+        <label class="radio-chip"><input type="radio" name="entrega" value="Domicilio">Domicilio</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Método de pago</label>
+      <div class="radio-row" id="hp-pago">
+        <label class="radio-chip checked"><input type="radio" name="pago" value="Efectivo" checked>Efectivo</label>
+        <label class="radio-chip"><input type="radio" name="pago" value="Transferencia">Transferencia</label>
+        <label class="radio-chip"><input type="radio" name="pago" value="Tarjeta">Tarjeta (en tienda)</label>
+      </div>
+      <div class="hint">Esto es solo informativo: el pago real se coordina por WhatsApp, aquí no se procesa ningún cobro.</div>
+    </div>
+
+    <div class="field">
+      <label for="f-notas">Notas generales (opcional)</label>
+      <textarea id="f-notas" class="finput" placeholder="Ej. dirección exacta, referencia, hora estimada…"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-accent btn-block" id="hp-enviar">
+      Enviar pedido por WhatsApp
+    </button>
+    <a href="./" class="btn btn-ghost btn-block" style="margin-top:10px">Seguir viendo el menú</a>
+  </form>
+</main>
+
+<div id="hp-footer"></div>
+
+<script src="../assets/js/config.js"></script>
+<script src="../assets/js/icons.js"></script>
+<script src="../assets/js/seed.js"></script>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/cart.js"></script>
+<script src="../assets/js/ui.js"></script>
+<script>
+(function(){
+  HP_UI.mount({root:'../'});
+
+  function renderResumen(){
+    const items = HP_CART.getItems();
+    const wrap = document.getElementById('hp-resumen');
+    if(items.length===0){
+      wrap.innerHTML = `<div class="empty-state">${hpIcon('empty')}<p>Tu carrito está vacío.</p><a class="btn btn-p" href="./">Ver el menú</a></div>`;
+      document.getElementById('hp-checkout-form').style.display='none';
+      return;
+    }
+    wrap.innerHTML = items.map(i=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:.9rem">
+        <span>${i.cantidad}x ${i.nombre}${i.nota?` <span style="color:var(--ink-3)">(${i.nota})</span>`:''}</span>
+        <span class="mono">${HP_CART.formatCOP(i.precio*i.cantidad)}</span>
+      </div>`).join('') +
+      `<div style="display:flex;justify-content:space-between;padding-top:12px;font-weight:800">
+        <span>Subtotal</span><span class="price">${HP_CART.formatCOP(HP_CART.subtotal())}</span>
+      </div>`;
+  }
+  renderResumen();
+
+  document.querySelectorAll('.radio-row').forEach(row=>{
+    row.addEventListener('change', ()=>{
+      row.querySelectorAll('.radio-chip').forEach(chip=>{
+        chip.classList.toggle('checked', chip.querySelector('input').checked);
+      });
+    });
+  });
+
+  function validar(field, ok){
+    const wrap = field.closest('.field');
+    wrap.classList.toggle('bad', !ok);
+    field.classList.toggle('bad', !ok);
+    field.classList.toggle('good', ok && field.value.trim());
+    return ok;
+  }
+  const nombreEl = document.getElementById('f-nombre');
+  const telEl = document.getElementById('f-telefono');
+  nombreEl.addEventListener('input', ()=> validar(nombreEl, nombreEl.value.trim().length>1));
+  nombreEl.addEventListener('blur', ()=> validar(nombreEl, nombreEl.value.trim().length>1));
+  telEl.addEventListener('input', ()=> validar(telEl, telEl.value.replace(/\D/g,'').length>=7));
+  telEl.addEventListener('blur', ()=> validar(telEl, telEl.value.replace(/\D/g,'').length>=7));
+
+  document.getElementById('hp-checkout-form').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const okNombre = validar(nombreEl, nombreEl.value.trim().length>1);
+    const okTel = validar(telEl, telEl.value.replace(/\D/g,'').length>=7);
+    if(!okNombre || !okTel){ HP_UI.toast('Revisa los datos marcados en rojo', 'err'); return; }
+
+    const btn = document.getElementById('hp-enviar');
+    btn.disabled = true; btn.textContent = 'Preparando tu pedido…';
+
+    const cliente = {nombre: nombreEl.value.trim(), telefono: telEl.value.trim()};
+    const tipoEntrega = document.querySelector('input[name="entrega"]:checked').value;
+    const metodoPago = document.querySelector('input[name="pago"]:checked').value;
+    const notasGenerales = document.getElementById('f-notas').value.trim();
+    const items = HP_CART.getItems();
+
+    try{
+      const pedido = await HP_DATA.crearPedido({
+        items, subtotal: HP_CART.subtotal(), notas: notasGenerales,
+        tipoEntrega, metodoPago, cliente
+      });
+      const msg = HP_CART.buildWhatsappMessage({folio: pedido.folio, cliente, tipoEntrega, metodoPago, notasGenerales});
+      window.open(HP_CART.whatsappLink(msg), '_blank');
+      HP_CART.clear();
+      HP_UI.toast(`Pedido ${pedido.folio} enviado 🎉`, 'ok');
+      setTimeout(()=> window.location.href = './', 1400);
+    }catch(err){
+      HP_UI.toast(err.message || 'No pudimos enviar el pedido', 'err');
+      btn.disabled = false; btn.textContent = 'Enviar pedido por WhatsApp';
+    }
+  });
+})();
+</script>
+</body>
+</html>
