@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Helados de Palito — Ibagué</title>
 <meta name="description" content="Menú digital de Helados de Palito: helados artesanales, paletas, malteadas, frappés y postres en Ibagué. Pide por WhatsApp.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Helados de Palito">
+<meta property="og:title" content="Helados de Palito — Ibagué">
+<meta property="og:description" content="Helados artesanales, paletas, malteadas, frappés y postres en Ibagué. Pide por WhatsApp.">
+<meta property="og:image" content="https://heladosdepalito.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://heladosdepalito.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Helados de Palito — Ibagué">
+<meta name="twitter:description" content="Helados artesanales, paletas, malteadas, frappés y postres en Ibagué. Pide por WhatsApp.">
+<meta name="twitter:image" content="https://heladosdepalito.vercel.app/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -264,6 +276,20 @@ main{min-height:70vh}
 .wa-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:#25D366;color:#fff;padding:14px;border-radius:var(--r-full);font-weight:800;font-size:1rem;box-shadow:0 8px 24px rgba(37,211,102,.32);transition:transform .15s}
 .wa-btn:hover{transform:translateY(-2px)}
 
+/* ── Visítanos (ubicación + mapa) ──────────────────────────── */
+.visit-section{margin:40px 0 8px}
+.visit-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:28px;align-items:stretch;margin-top:24px}
+.visit-cards{display:flex;flex-direction:column;gap:14px}
+.visit-card{background:var(--card);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh-soft);border-left:3px solid var(--fucsia)}
+.visit-card .vc-label{font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mora);font-weight:700;margin-bottom:8px}
+.visit-card .vc-main{font-weight:800;font-size:1.05rem;color:var(--ink);margin-bottom:4px}
+.visit-card .vc-sub{font-size:.85rem;color:var(--ink-3);line-height:1.5}
+.visit-card a.vc-link{display:inline-flex;align-items:center;gap:6px;color:var(--fucsia);font-weight:800;font-size:.85rem;margin-top:8px}
+.visit-card a.vc-link:hover{color:var(--fucsia-d)}
+.visit-map{border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-soft);min-height:280px;position:relative}
+.visit-map iframe{width:100%;height:100%;min-height:280px;border:0;display:block}
+@media(max-width:820px){.visit-grid{grid-template-columns:1fr}.visit-map{order:-1;min-height:220px}.visit-map iframe{min-height:220px}}
+
 /* ── Scroll reveal ───────────────────────────────────────── */
 .rv{opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}
 .rv.in{opacity:1;transform:none}
@@ -487,6 +513,16 @@ main{min-height:70vh}
       <h2>Tarjeta de Fidelización</h2>
       <p class="sub">8 compras = 1 heladito de regalo 🎁</p>
     </div>
+    <div id="lc-phone-box" style="display:none;gap:8px;margin-bottom:16px;background:var(--card);border-radius:var(--r-lg);padding:16px;box-shadow:var(--sh-soft);flex-wrap:wrap">
+      <div style="flex:1;min-width:220px">
+        <div style="font-weight:700;margin-bottom:4px;font-size:.92rem">Vincula tu tarjeta a tu celular</div>
+        <div style="font-size:.82rem;color:var(--ink-3);margin-bottom:10px">Así tus sellos quedan guardados de verdad y no se pierden si cambias de dispositivo.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="lc-phone-input" class="form-input" type="tel" placeholder="Tu celular (10 dígitos)" style="flex:1;min-width:160px">
+          <button class="btn-primary" onclick="saveLoyaltyPhone()">Vincular</button>
+        </div>
+      </div>
+    </div>
     <div class="loyalty-card" id="lc-card">
       <div class="lc-top">
         <div class="lc-brand">Helados de Palito</div>
@@ -503,6 +539,9 @@ main{min-height:70vh}
     </div>
     <div class="lc-complete" id="lc-complete">
       🎉 ¡Tarjeta completa! Muéstrale esta pantalla al vendedor para reclamar tu helado gratis.
+      <div style="margin-top:10px">
+        <button class="btn-primary" onclick="redeemLoyalty()">Ya reclamé mi premio</button>
+      </div>
     </div>
     <div class="qr-wrap rv">
       <div id="qr-code"></div>
@@ -562,13 +601,33 @@ main{min-height:70vh}
         Escribir por WhatsApp
       </a>
     </div>
-    <div class="contact-card rv">
-      <h3 style="margin-bottom:14px">Información</h3>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;gap:12px"><span style="font-size:1.2rem">📍</span><span style="color:var(--ink-2);font-size:.9rem">Ibagué, Tolima, Colombia</span></div>
-        <div style="display:flex;gap:12px"><span style="font-size:1.2rem">📱</span><a href="tel:+573202401152" style="color:var(--fucsia);font-weight:700;font-size:.9rem">+57 320 240 1152</a></div>
-        <div style="display:flex;gap:12px"><span style="font-size:1.2rem">🕐</span><span style="color:var(--ink-2);font-size:.9rem">Lunes a Domingo · 11:00 am – 9:00 pm</span></div>
-        <div style="display:flex;gap:12px"><span style="font-size:1.2rem">📸</span><a href="https://instagram.com/heladosdepalito" target="_blank" style="color:var(--fucsia);font-weight:700;font-size:.9rem">@heladosdepalito</a></div>
+    <div class="visit-section rv">
+      <div class="hero-eyebrow">— Ubicación y contacto</div>
+      <h2 style="font-size:clamp(1.5rem,3.5vw,2.1rem);color:var(--ink);margin-bottom:6px">Visítanos en Ibagué</h2>
+      <p style="color:var(--ink-2);max-width:520px">Puedes recoger tu pedido en tienda o pedir domicilio dentro de la ciudad.</p>
+      <div class="visit-grid">
+        <div class="visit-cards">
+          <div class="visit-card">
+            <div class="vc-label">Pedidos y asesoría</div>
+            <div class="vc-main">+57 320 240 1152</div>
+            <div class="vc-sub">Te confirmamos disponibilidad y tiempo de entrega al momento.</div>
+            <a class="vc-link" href="https://wa.me/573202401152" target="_blank">Escribir por WhatsApp →</a>
+          </div>
+          <div class="visit-card">
+            <div class="vc-label">Horario de atención</div>
+            <div class="vc-main">Lunes a Domingo</div>
+            <div class="vc-sub">11:00 am – 9:00 pm</div>
+          </div>
+          <div class="visit-card">
+            <div class="vc-label">Dirección</div>
+            <div class="vc-main">Ibagué, Tolima</div>
+            <div class="vc-sub">Colombia · @heladosdepalito</div>
+            <a class="vc-link" href="https://www.google.com/maps/search/?api=1&query=Ibagu%C3%A9%2C+Tolima%2C+Colombia" target="_blank">Cómo llegar en Google Maps →</a>
+          </div>
+        </div>
+        <div class="visit-map">
+          <iframe src="https://www.google.com/maps?q=Ibagu%C3%A9,Tolima,Colombia&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        </div>
       </div>
     </div>
     <div style="height:32px"></div>
@@ -582,6 +641,10 @@ const SUPABASE_URL = '';
 const SUPABASE_ANON_KEY = '';
 const WA = '573202401152';
 const REQUIRED_STAMPS = 8;
+// Pega aquí la URL de tu Google Apps Script (ver instrucciones) para activar
+// el registro automático de pedidos y la tarjeta de fidelización real.
+// Mientras esté vacío, el sitio sigue funcionando igual que antes (sin backend).
+const BACKEND_URL = '';
 const PAGES_CFG = {
   inicio:{title:'Helados de Palito | Inicio',desc:'Menú digital artesanal de Helados de Palito en Ibagué'},
   menu:{title:'Menú · Helados de Palito',desc:'Helados, paletas, malteadas y más'},
@@ -862,17 +925,38 @@ function sendWhatsApp(){
   msg+=`👤 Nombre: ${name} | Tel: ${phone}`;
   if(notes) msg+=`
 📝 Notas: ${notes}`;
+  localStorage.setItem('hp_customer_phone', phone);
+  logOrderToBackend({folio,name,phone,notes,delivery,payment,total:sub,
+    items:cart.map(i=>`${i.qty}x ${i.name}`).join(', ')});
   window.location.href=`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`;
   cart=[];saveCart();
   setTimeout(()=>goPage('inicio'),500);
 }
 
 // ── Loyalty ─────────────────────────────────────────────
-function renderLoyalty(){
-  let code=localStorage.getItem('hp_lc_code');
-  let stamps=parseInt(localStorage.getItem('hp_lc_stamps')||'0');
-  if(!code){code='HP-'+Math.random().toString(36).slice(2,8).toUpperCase();localStorage.setItem('hp_lc_code',code);}
-  document.getElementById('lc-code').textContent='Código: '+code;
+// ── Backend (Google Apps Script) — registro de pedidos + fidelización real ──
+// Con BACKEND_URL configurado: cada pedido queda guardado en tu Google Sheet
+// y suma un sello automático a la tarjeta del cliente (por su número de tel.).
+// Sin configurar: el sitio sigue funcionando igual que siempre, solo local.
+function logOrderToBackend(data){
+  if(!BACKEND_URL) return;
+  fetch(BACKEND_URL,{method:'POST',mode:'no-cors',keepalive:true,
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'order',...data})}).catch(()=>{});
+}
+function fetchBackendStamps(phone){
+  if(!BACKEND_URL||!phone) return Promise.resolve(null);
+  return fetch(`${BACKEND_URL}?phone=${encodeURIComponent(phone)}`)
+    .then(r=>r.json()).then(d=>d.ok?d.stamps:null).catch(()=>null);
+}
+function redeemBackend(phone){
+  if(!BACKEND_URL||!phone) return Promise.resolve(false);
+  return fetch(BACKEND_URL,{method:'POST',mode:'no-cors',keepalive:true,
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'redeem',phone})}).then(()=>true).catch(()=>false);
+}
+
+function paintLoyalty(stamps){
   const stampsEl=document.getElementById('lc-stamps');
   const stampSVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="26" height="26">
     <rect x="14.5" y="18" width="3" height="10" rx="1.5" fill="currentColor"/>
@@ -887,9 +971,58 @@ function renderLoyalty(){
   document.getElementById('lc-label').textContent=stamps+' / '+REQUIRED_STAMPS+' sellos';
   const complete=stamps>=REQUIRED_STAMPS;
   document.getElementById('lc-complete').classList.toggle('show',complete);
-  if(!document.getElementById('qr-code').children.length){
-    try{new QRCode(document.getElementById('qr-code'),{text:'HP:'+code,width:160,height:160,colorDark:'#602F80',colorLight:'#ffffff'})}catch(e){}
+}
+
+function renderLoyalty(){
+  let code=localStorage.getItem('hp_lc_code');
+  if(!code){code='HP-'+Math.random().toString(36).slice(2,8).toUpperCase();localStorage.setItem('hp_lc_code',code);}
+  const phone=localStorage.getItem('hp_customer_phone')||'';
+  const phoneBox=document.getElementById('lc-phone-box');
+  const statusEl=document.getElementById('lc-status');
+
+  if(!phone){
+    // Sin teléfono todavía: pedirlo para activar la tarjeta real (backend) —
+    // mientras tanto se muestra el progreso guardado solo en este dispositivo.
+    if(phoneBox) phoneBox.style.display='flex';
+    document.getElementById('lc-code').textContent='Código: '+code;
+    paintLoyalty(parseInt(localStorage.getItem('hp_lc_stamps')||'0'));
+  } else {
+    if(phoneBox) phoneBox.style.display='none';
+    document.getElementById('lc-code').textContent='Tel: '+phone;
+    const localStamps=parseInt(localStorage.getItem('hp_lc_stamps')||'0');
+    paintLoyalty(localStamps);
+    if(BACKEND_URL){
+      if(statusEl){statusEl.textContent='Sincronizando…';statusEl.className='pill';}
+      fetchBackendStamps(phone).then(remote=>{
+        if(remote!==null){
+          localStorage.setItem('hp_lc_stamps', remote);
+          paintLoyalty(remote);
+          if(statusEl){statusEl.textContent='Activa';statusEl.className='pill pill-ok';}
+        } else if(statusEl){statusEl.textContent='Activa (local)';statusEl.className='pill pill-ok';}
+      });
+    }
   }
+  if(!document.getElementById('qr-code').children.length){
+    try{new QRCode(document.getElementById('qr-code'),{text:phone?('HP-TEL:'+phone):('HP:'+code),width:160,height:160,colorDark:'#602F80',colorLight:'#ffffff'})}catch(e){}
+  }
+}
+
+function saveLoyaltyPhone(){
+  const input=document.getElementById('lc-phone-input');
+  const val=input.value.trim();
+  if(!/^[0-9]{10}$/.test(val)){toast('⚠ Ingresa un celular válido (10 dígitos)');return;}
+  localStorage.setItem('hp_customer_phone', val);
+  document.getElementById('qr-code').innerHTML='';
+  toast('✓ Tarjeta vinculada a tu celular');
+  renderLoyalty();
+}
+
+function redeemLoyalty(){
+  const phone=localStorage.getItem('hp_customer_phone')||'';
+  localStorage.setItem('hp_lc_stamps','0');
+  toast('🎁 ¡Premio reclamado! Sellos reiniciados');
+  if(phone) redeemBackend(phone);
+  renderLoyalty();
 }
 
 // ── Scroll reveal ────────────────────────────────────────
